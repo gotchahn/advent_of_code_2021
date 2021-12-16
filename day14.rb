@@ -13,31 +13,26 @@ module AdventOfCode
       for step in 1..steps
 
         # scan the template
-        founds = []
         inputs.each do |input|
           pattern = input[0].strip
           c = input[1].strip
 
-          match = template.scan(/#{pattern}/)
+          #loop do
+          #  index = template.index(/#{pattern}/)
+          #  break if index.nil?
 
-          if match.any?
-            founds.push([pattern, c, match.size])
-          end
-        end
-
-        founds.each do |f|
-          for t in 1..f[2]
-            index = template.index(/#{f[0]}/)
-            template.insert(index+1, "-#{f[1]}-")
-          end
+          #  template.insert(index+1, "-#{c}-")
+          #end
+          @template.gsub!(/#{pattern}/, pattern.clone.insert(1,"-#{c}-"))
         end
 
         @template.gsub!("-","")
 
         #puts "After step #{step}: #{template}"
+        puts "step #{step} done"
       end
       counter = template.chars.map{|c| template.chars.count(c)}.sort
-      counter
+      [counter.last, counter.first, counter.last-counter.first]
     end
   end
 end
