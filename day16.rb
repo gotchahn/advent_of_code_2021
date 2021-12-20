@@ -42,41 +42,78 @@ module AdventOfCode
       end
 
       puts "Literal value: #{literal.to_i(2)}"
-      total_bits
+      [total_bits, literal.to_i(2)]
     end
 
-    def parse_length_package(start)
-      bitmin = start
-      bitmax = start + 14
+    def parse_operator_package(start, type)
+      length_type = binary[start]
+      puts "Operational package with length ID: #{length_type}"
+      total_bits = 1
+      offset = length_type == "0" ? 15 : 11
+
+      bitmin = start + 1
+      bitmax = start + offset
       length = decimal(bitmin, bitmax)
-      total_bits = 15
+      puts "length: #{length}"
+      total_bits += offset
+      result_collection = []
       read = 0
 
       while read < length
-        bits = parse_package(bitmax+1)
+        puts "#{read} < #{length} : started: #{bitmax+1}"
+        bits, result = parse_package(bitmax+1)
         bitmax += bits
-        read += bits
+        read += (length_type == "0" ? bits : 1)
         total_bits += bits
+        result_collection.push(result)
       end
 
-      total_bits
+      print "Going to result parsing with: #{result_collection} and type #{type}"
+      final_result = parse_result(result_collection, type)
+      puts "= #{final_result}"
+      [total_bits, final_result]
     end
 
-    def parse_number_package(start)
-      bitmin = start
-      bitmax = start + 10
-      length = decimal(bitmin, bitmax)
-      total_bits = 11
-      read = 0
+    def parse_result(collect, type)
+      if type == 0
+        # sum
+        collect.sum
+      elsif type == 1
+        # product
+        collect.inject(:*)
+      elsif type == 2
+        # min
+        collect.min
+      elsif type == 3
+        # max
+        collect.max
+      else
+        r1 = collect[0]
+        r2 = collect[1]
 
-      while read < length
-        bits = parse_package(bitmax+1)
-        bitmax += bits
-        read += 1
-        total_bits += bits
+        if type == 5
+          # greater than
+          if r1 > r2
+            1
+          else
+            0
+          end
+        elsif type == 6
+          # less than
+          if r1 < r2
+            1
+          else
+            0
+          end
+        else
+          # equal than
+          if r1 == r2
+            1
+          else
+            0
+          end
+        end
       end
-
-      total_bits
     end
 
     def parse_package(start)
@@ -98,26 +135,21 @@ module AdventOfCode
       total_bits += 3
 
       if p_type == 4
-        total_bits += parse_literal_package(bitmax+1)
+        response = parse_literal_package(bitmax+1)
       else
-        bitmax += 1
-        length = binary[bitmax]
-        total_bits += 1
-
-        if length == '0'
-          puts "Length of bits Package"
-          total_bits += parse_length_package(bitmax+1)
-        else
-          puts "Number of Package"
-          total_bits += parse_number_package(bitmax+1)
-        end
+        response = parse_operator_package(bitmax+1, p_type)
       end
-      total_bits
+
+      total_bits += response[0]
+      result = response[1]
+
+      [total_bits, result]
     end
 
     def parse
       @versions = 0
-      bits_read = parse_package(0)
+      bits_read, result = parse_package(0)
+      result
     end
   end
 end
